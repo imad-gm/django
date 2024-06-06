@@ -30,11 +30,12 @@ from django.utils.regex_helper import _lazy_re_compile
 class PositionRef(Ref):
     def __init__(self, ordinal, refs, source):
         self.ordinal = ordinal
+        self.alias = refs
         super().__init__(refs, source)
 
     def as_sql(self, compiler, connection):
-        return str(self.ordinal), ()
-
+        ref = self.alias if self.alias else self.ordinal
+        return str(ref), ()
 
 class SQLCompiler:
     # Multiline ordering SQL clause may appear from RawSQL.
@@ -154,7 +155,7 @@ class SQLCompiler:
         selected_expr_indices = {}
         for index, (expr, _, alias) in enumerate(select, start=1):
             if alias:
-                selected_expr_indices[expr] = index
+                selected_expr_indices[expr] = alias
             # Skip members of the select clause that are already explicitly
             # grouped against.
             if alias in group_by_refs:
